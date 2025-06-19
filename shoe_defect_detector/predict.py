@@ -105,5 +105,5 @@ def predict(image_path: str):
         print(f"❓ Sınır durumu ({score}/100) – Manuel kontrol önerilir.")
 
 if __name__ == "__main__":
-    img_path = sys.argv[1] if len(sys.argv) > 1 else "dataset/defect/boot2.jpg"
+    img_path = sys.argv[1] if len(sys.argv) > 1 else "dataset/normal/boot.jpg"
     predict(img_path)
