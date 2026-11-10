@@ -1,64 +1,64 @@
 # Shoe Defect Detector
 
-Ayakkabı görsellerinde ve videolarında kusur (defect) tespiti yapan bir Python / PyTorch projesi. Bir görsel üç aşamadan geçiyor: önce ayrı bir MobileNetV2 sınıflandırıcı görselde ayakkabı olup olmadığına bakıyor, sonra görselin bulanıklığı ölçülüyor, en son ikinci bir MobileNetV2 modeli kusur olasılığını hesaplıyor. Skor eşiği aşılırsa kusurlu bölgeyi işaretlemek için bir YOLOv8 modeli çalıştırılıyor. Konsol çıktıları ve arayüz metinleri Türkçe.
+A Python / PyTorch project that detects defects in shoe images and videos. An image goes through three stages: first a separate MobileNetV2 classifier checks whether the image contains a shoe, then the image's blurriness is measured, and finally a second MobileNetV2 model computes the defect probability. If the score passes the threshold, a YOLOv8 model is run to mark the defective region. Console output and UI text are in Turkish.
 
-## Özellikler
+## Features
 
-- **Ayakkabı / ayakkabı değil kontrolü** (`shoe_detector.py`): MobileNetV2 tabanlı ikili sınıflandırıcı (`model/shoe_cls.pt`) ve Canny kenar oranı kontrolü (`edge_ratio > 0.02`).
-- **Bulanıklık kontrolü**: Laplacian varyansı 100'ün altındaysa görsel reddediliyor ve yeniden çekilmesi isteniyor.
-- **Kusur sınıflandırması** (`predict.py`): CLAHE ile kontrast eşitleme, 224x224'e yeniden boyutlandırma, MobileNetV2 (`model/model.pt`) ile 0–100 arası kusur skoru.
-- **Kusur lokalizasyonu**: Skor 42 ve üzerindeyse YOLOv8 modeli (`runs/detect/defect_v2/weights/best.pt`) görsel üzerinde çalıştırılıyor, sonuç `runs/detect/predict*/` altına kaydediliyor.
-- **Video analizi** (`predict_video.py`): Videonun her 5. karesi analiz ediliyor, durum ("Hatali", "Sağlam", "Sınır", "Bulanık") karenin üzerine yazılıyor ve OpenCV penceresinde gösteriliyor. `q` ile çıkılıyor; bitince işlenen kare sayısı ve FPS yazdırılıyor.
-- **Tek tıkla çalıştırma** (`run_project.bat`): Eksik modelleri sırayla eğitip tahmin çalıştıran Windows betiği.
+- **Shoe / not-shoe check** (`shoe_detector.py`): A MobileNetV2-based binary classifier (`model/shoe_cls.pt`) plus a Canny edge ratio check (`edge_ratio > 0.02`).
+- **Blur check**: If the Laplacian variance is below 100, the image is rejected and the user is asked to retake it.
+- **Defect classification** (`predict.py`): Contrast equalization with CLAHE, resizing to 224x224, and a defect score from 0–100 from MobileNetV2 (`model/model.pt`).
+- **Defect localization**: If the score is 42 or higher, the YOLOv8 model (`runs/detect/defect_v2/weights/best.pt`) is run on the image and the result is saved under `runs/detect/predict*/`.
+- **Video analysis** (`predict_video.py`): Every 5th frame of the video is analyzed, the status ("Hatali" (defective), "Sağlam" (sound), "Sınır" (borderline), "Bulanık" (blurry)) is drawn on the frame and shown in an OpenCV window. Press `q` to quit; when it finishes, the number of processed frames and the FPS are printed.
+- **One-click run** (`run_project.bat`): A Windows script that trains missing models in order and then runs prediction.
 
-## Teknoloji
+## Technology
 
-- Python (PyCharm proje ayarlarında Python 3.13 görünüyor)
+- Python (the PyCharm project settings show Python 3.13)
 - PyTorch, torchvision (MobileNetV2, ImageFolder)
-- Ultralytics YOLOv8 (`yolov8n.pt` taban model)
+- Ultralytics YOLOv8 (`yolov8n.pt` base model)
 - OpenCV, NumPy, Pillow
-- Kaggle CLI (yalnızca `run_project.bat` içindeki veri indirme adımı için)
+- Kaggle CLI (only for the data download step in `run_project.bat`)
 
-## Proje yapısı
+## Project structure
 
 ```
 shoe_defect_detector/
-├── main.py                 # Kusur CNN'ini eğitir (MobileNetV2, son iki blok + classifier) -> model/model.pt
-├── train_defect_cnn.py     # Alternatif kusur CNN eğitimi (features dondurulmuş, argüman alır) -> model/model.pt
-├── train_shoe_cls.py       # Ayakkabı / ayakkabı değil sınıflandırıcısı -> model/shoe_cls.pt
-├── train.py                # YOLOv8 eğitimi (dataset.yaml)
-├── shoe_detector.py        # is_shoe() fonksiyonu
-├── predict.py              # Tek görsel için tahmin
-├── predict_video.py        # Video üzerinde tahmin
-├── quick_probe.py          # Ayakkabı sınıflandırıcısının olasılığını ve kenar oranını yazdırır
-├── run_project.bat         # Kurulum kontrolü + eğitim + tahmin akışı
-├── dataset.yaml            # YOLO veri tanımı (tek sınıf: defect)
+├── main.py                 # Trains the defect CNN (MobileNetV2, last two blocks + classifier) -> model/model.pt
+├── train_defect_cnn.py     # Alternative defect CNN training (frozen features, takes arguments) -> model/model.pt
+├── train_shoe_cls.py       # Shoe / not-shoe classifier -> model/shoe_cls.pt
+├── train.py                # YOLOv8 training (dataset.yaml)
+├── shoe_detector.py        # is_shoe() function
+├── predict.py              # Prediction for a single image
+├── predict_video.py        # Prediction on video
+├── quick_probe.py          # Prints the shoe classifier's probability and the edge ratio
+├── run_project.bat         # Setup check + training + prediction flow
+├── dataset.yaml            # YOLO data definition (single class: defect)
 ├── dataset/
-│   ├── defect/             # Kusurlu örnekler (ImageFolder sınıfı)
-│   └── normal/             # Sağlam örnekler
-├── images/train, images/val  # YOLO eğitim / doğrulama görselleri
+│   ├── defect/             # Defective samples (ImageFolder class)
+│   └── normal/             # Sound samples
+├── images/train, images/val  # YOLO training / validation images
 ├── shoe_detector_data/
-│   ├── shoe/               # Ayakkabı görselleri
-│   └── not_shoe/           # Ayakkabı olmayan görseller
-├── shoe_tmp/               # Kaggle'dan indirilen "Shoe vs Sandal vs Boot" veri seti
+│   ├── shoe/               # Shoe images
+│   └── not_shoe/           # Non-shoe images
+├── shoe_tmp/               # "Shoe vs Sandal vs Boot" dataset downloaded from Kaggle
 ├── model/                  # model.pt, shoe_cls.pt
-├── runs/                   # YOLO eğitim (train*, defect_v1, detect/defect_v2) ve tahmin çıktıları
-└── yolov8n.pt              # YOLOv8n taban ağırlıkları
+├── runs/                   # YOLO training (train*, defect_v1, detect/defect_v2) and prediction outputs
+└── yolov8n.pt              # YOLOv8n base weights
 ```
 
-Depoda eğitilmiş ağırlıklar (`model/model.pt`, `model/shoe_cls.pt`, `runs/.../weights/best.pt`) ve Kaggle veri setinin bir kopyası (`shoe_tmp/`, yaklaşık 15.000 görsel; `shoe_detector_data/shoe/` altında 10.000 görsel) bulunuyor. Bu yüzden klon boyutu büyük.
+The repository contains trained weights (`model/model.pt`, `model/shoe_cls.pt`, `runs/.../weights/best.pt`) and a copy of the Kaggle dataset (`shoe_tmp/`, about 15,000 images; 10,000 images under `shoe_detector_data/shoe/`). Because of this, the clone is large.
 
-## Gereksinimler
+## Requirements
 
-Kodun import ettiği paketler `shoe_defect_detector/requirements.txt` dosyasında listeleniyor (torch, torchvision, ultralytics, opencv-python, numpy, pillow):
+The packages the code imports are listed in `shoe_defect_detector/requirements.txt` (torch, torchvision, ultralytics, opencv-python, numpy, pillow):
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Veri indirme adımı için ayrıca `pip install kaggle` ve `%USERPROFILE%\.kaggle\kaggle.json` API anahtarı gerekiyor. CUDA varsa `main.py`, `train_defect_cnn.py` ve `predict_video.py` otomatik olarak GPU kullanıyor. `train_shoe_cls.py` sabit olarak CPU'da çalışıyor.
+The data download step also needs `pip install kaggle` and a `%USERPROFILE%\.kaggle\kaggle.json` API key. If CUDA is available, `main.py`, `train_defect_cnn.py` and `predict_video.py` use the GPU automatically. `train_shoe_cls.py` always runs on the CPU.
 
-## Kurulum
+## Setup
 
 ```bash
 cd shoe_defect_detector
@@ -67,71 +67,71 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Tüm betikler göreli yollar kullanıyor (`model/...`, `dataset`, `runs/...`). Bu yüzden komutları `shoe_defect_detector/` klasörünün içinden çalıştırın.
+All scripts use relative paths (`model/...`, `dataset`, `runs/...`), so run the commands from inside the `shoe_defect_detector/` folder.
 
-## Kullanım
+## Usage
 
-### Tek görsel tahmini
+### Single image prediction
 
 ```bash
 python predict.py yol/gorsel.jpg
 ```
 
-Argüman verilmezse `dataset/normal/boot.jpg` kullanılıyor. Görselin çözünürlüğü en az 100x100 piksel olmalı ve görsel 3 kanallı, uint8 formatında olmalı. Örnek çıktılar:
+If no argument is given, `dataset/normal/boot.jpg` is used. The image must be at least 100x100 pixels, 3-channel, in uint8 format. Example outputs:
 
-- `❌ Görselde ayakkabı yok / okunmuyor.`
-- `🔄 Görsel bulanık (blur=...); lütfen yeniden çekin.`
-- `⚠️ Majör Defect (skor/100)`: YOLO çalıştırılır, sonuç `runs/detect/predictN/` altına kaydedilir.
-- `✅ Sağlam – Güven .../100`
+- `❌ Görselde ayakkabı yok / okunmuyor.` (no shoe in the image / can't be read)
+- `🔄 Görsel bulanık (blur=...); lütfen yeniden çekin.` (image is blurry; please retake it)
+- `⚠️ Majör Defect (skor/100)`: YOLO is run and the result is saved under `runs/detect/predictN/`.
+- `✅ Sağlam – Güven .../100` (sound – confidence)
 
-### Video tahmini
+### Video prediction
 
 ```bash
 python predict_video.py yol/video.mp4
 ```
 
-Argüman verilmezse depodaki örnek video `dataset/defect/hata.mp4` kullanılıyor.
+If no argument is given, the sample video in the repository, `dataset/defect/hata.mp4`, is used.
 
-### Modelleri yeniden eğitme
+### Retraining the models
 
 ```bash
-# Ayakkabı / ayakkabı değil sınıflandırıcısı (shoe_detector_data/shoe ve not_shoe)
+# Shoe / not-shoe classifier (shoe_detector_data/shoe and not_shoe)
 python train_shoe_cls.py
 
-# Kusur CNN'i (dataset/defect ve dataset/normal)
+# Defect CNN (dataset/defect and dataset/normal)
 python main.py
-# veya, features katmanları dondurulmuş ve parametreli sürüm:
+# or, the version with frozen features layers and parameters:
 python train_defect_cnn.py EPOCHS=10 LR=1e-4 POS_WT=2.0
 
-# YOLOv8 kusur dedektörü (dataset.yaml -> images/train, images/val)
+# YOLOv8 defect detector (dataset.yaml -> images/train, images/val)
 python train.py --epochs 30 --imgsz 640 --batch 16 --model yolov8n.pt --name defect_v1 --exist_ok
 ```
 
-`train.py` sonuçları `runs/<name>/` altına yazıyor. `predict.py` ve `predict_video.py` ise `runs/detect/defect_v2/weights/best.pt` dosyasını kullanıyor. Yeni bir YOLO modeli eğittiyseniz bu yolu güncellemeniz gerekiyor.
+`train.py` writes its results under `runs/<name>/`. `predict.py` and `predict_video.py`, however, use `runs/detect/defect_v2/weights/best.pt`. If you train a new YOLO model, you need to update this path.
 
-### Toplu akış (Windows)
+### Batch flow (Windows)
 
 ```bat
 run_project.bat
 ```
 
-Betik şunları yapıyor:
+The script does the following:
 
-1. `venv` klasörünün varlığını kontrol ediyor ve sanal ortamı etkinleştiriyor.
-2. Kaggle CLI'yi kuruyor (yoksa) ve `kaggle.json` dosyasını kontrol ediyor.
-3. `shoe_detector_data/shoe` boşsa `hasibalmuzdadid/shoe-vs-sandal-vs-boot-dataset-15k-images` veri setini indiriyor. `not_shoe` klasörü boşsa duruyor; bu klasörü elle doldurmanız gerekiyor.
-4. `model/shoe_cls.pt`, `model/model.pt` ve `runs/defect_v1/weights/best.pt` yoksa ilgili modeli eğitiyor.
-5. `predict.py` çalıştırıyor.
+1. Checks that the `venv` folder exists and activates the virtual environment.
+2. Installs the Kaggle CLI (if missing) and checks for the `kaggle.json` file.
+3. If `shoe_detector_data/shoe` is empty, downloads the `hasibalmuzdadid/shoe-vs-sandal-vs-boot-dataset-15k-images` dataset. If the `not_shoe` folder is empty, it stops; you need to fill this folder manually.
+4. Trains the corresponding model if `model/shoe_cls.pt`, `model/model.pt` or `runs/defect_v1/weights/best.pt` is missing.
+5. Runs `predict.py`.
 
-## Veri
+## Data
 
-- **Kusur CNN'i** `torchvision.datasets.ImageFolder` ile `dataset/` klasörünü okuyor. Sınıf indeksleri alfabetik sırayla atanıyor (`defect=0`, `normal=1`). Bu yüzden `predict.py` kusur olasılığını `1 - sigmoid(logit)` olarak hesaplıyor. Depodaki `dataset/` altında sadece birkaç örnek dosya var; modeli yeniden eğitmek için kendi görsellerinizi eklemeniz gerekiyor.
-- **YOLO** `dataset.yaml` dosyasını kullanıyor (`nc: 1`, `names: ['defect']`). `images/train` ve `images/val` klasörlerinde yalnızca birer `sample.jpg` var, etiket (`.txt`) dosyası yok.
+- **The defect CNN** reads the `dataset/` folder with `torchvision.datasets.ImageFolder`. Class indices are assigned alphabetically (`defect=0`, `normal=1`), which is why `predict.py` computes the defect probability as `1 - sigmoid(logit)`. The `dataset/` folder in the repository contains only a few sample files; to retrain the model you need to add your own images.
+- **YOLO** uses `dataset.yaml` (`nc: 1`, `names: ['defect']`). The `images/train` and `images/val` folders contain only one `sample.jpg` each, with no label (`.txt`) files.
 
-## Notlar ve sınırlamalar
+## Notes and limitations
 
-- YOLO eğitim verisi neredeyse boş olduğu için `runs/detect/defect_v2/results.csv` dosyasında precision, recall ve mAP değerleri 0. Gerçek kusur lokalizasyonu için etiketli bir YOLO veri seti hazırlanması gerekiyor.
-- `predict.py` ve `predict_video.py` skoru farklı yorumluyor. Görsel tahmininde `1 - sigmoid` kullanılırken, videoda ham sigmoid değerine +10 ekleniyor ve eşikler 55/80/40. Video betiğindeki yorum satırı da bu farka işaret ediyor.
-- `predict.py` içinde tanımlı `TH_MINOR` / `TH_MAJOR` sabitleri, `upscale_if_small` ve `unsharp` fonksiyonları kullanılmıyor. Fiili karar eşiği 42.
-- `quick_probe.py` argüman verilmezse `images/boot.jpg` dosyasını okuyor.
-- Depoda lisans dosyası yok; lisans belirtilmemiş.
+- Because the YOLO training data is almost empty, precision, recall and mAP are 0 in `runs/detect/defect_v2/results.csv`. Real defect localization requires preparing a labeled YOLO dataset.
+- `predict.py` and `predict_video.py` interpret the score differently. Image prediction uses `1 - sigmoid`, while the video script adds +10 to the raw sigmoid value and uses thresholds of 55/80/40. A comment in the video script also points to this difference.
+- The `TH_MINOR` / `TH_MAJOR` constants and the `upscale_if_small` and `unsharp` functions defined in `predict.py` are unused. The actual decision threshold is 42.
+- If no argument is given, `quick_probe.py` reads `images/boot.jpg`.
+- The repository has no license file; no license is specified.
