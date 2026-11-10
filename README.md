@@ -50,10 +50,10 @@ Depoda eğitilmiş ağırlıklar (`model/model.pt`, `model/shoe_cls.pt`, `runs/.
 
 ## Gereksinimler
 
-`run_project.bat` bir `requirements.txt` dosyası bekliyor ama depoda böyle bir dosya yok. Kodun import ettiği paketler:
+Kodun import ettiği paketler `shoe_defect_detector/requirements.txt` dosyasında listeleniyor (torch, torchvision, ultralytics, opencv-python, numpy, pillow):
 
 ```bash
-pip install torch torchvision ultralytics opencv-python numpy pillow
+pip install -r requirements.txt
 ```
 
 Veri indirme adımı için ayrıca `pip install kaggle` ve `%USERPROFILE%\.kaggle\kaggle.json` API anahtarı gerekiyor. CUDA varsa `main.py`, `train_defect_cnn.py` ve `predict_video.py` otomatik olarak GPU kullanıyor. `train_shoe_cls.py` sabit olarak CPU'da çalışıyor.
@@ -64,7 +64,7 @@ Veri indirme adımı için ayrıca `pip install kaggle` ve `%USERPROFILE%\.kaggl
 cd shoe_defect_detector
 python -m venv venv
 venv\Scripts\activate
-pip install torch torchvision ultralytics opencv-python numpy pillow
+pip install -r requirements.txt
 ```
 
 Tüm betikler göreli yollar kullanıyor (`model/...`, `dataset`, `runs/...`). Bu yüzden komutları `shoe_defect_detector/` klasörünün içinden çalıştırın.
@@ -86,17 +86,11 @@ Argüman verilmezse `dataset/normal/boot.jpg` kullanılıyor. Görselin çözün
 
 ### Video tahmini
 
-`predict_video.py` içindeki video yolu sabit yazılmış:
-
-```python
-VIDEO_PATH = r"C:\görüntüişleme\shoe_defect_detector\dataset\defect\hata.mp4"
-```
-
-Kendi makinenizde çalıştırmadan önce bu satırı düzenleyin (depoda örnek video `dataset/defect/hata.mp4` olarak duruyor), sonra:
-
 ```bash
-python predict_video.py
+python predict_video.py yol/video.mp4
 ```
+
+Argüman verilmezse depodaki örnek video `dataset/defect/hata.mp4` kullanılıyor.
 
 ### Modelleri yeniden eğitme
 

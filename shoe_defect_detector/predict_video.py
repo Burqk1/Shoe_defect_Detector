@@ -62,7 +62,7 @@ def analyse(frame, show=True):
 
     return status
 
-VIDEO_PATH = r"C:\görüntüişleme\shoe_defect_detector\dataset\defect\hata.mp4"
+VIDEO_PATH = sys.argv[1] if len(sys.argv) > 1 else "dataset/defect/hata.mp4"
 
 print(f"[+] Opening video source: {VIDEO_PATH}")
 cap = cv2.VideoCapture(VIDEO_PATH)
